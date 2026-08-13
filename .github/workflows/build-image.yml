@@ -28,3 +28,25 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: app:${{ github.sha }}
+
+
+
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-east4-docker.pkg.dev
+
+      - name: Build Registry Image
+        run: |
+          docker build -t \
+          us-east4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/demo-repo/python-demo:${{ github.sha }} .
+
+      - name: Push Image
+        run: |
+          docker push \
+          us-east4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/demo-repo/python-demo:${{ github.sha }}  
